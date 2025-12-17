@@ -1,10 +1,9 @@
-export type Metadata = Record<string, string | number | boolean | null | undefined>;
+export type MetadataValue = string | number | boolean | null;
 
-export type IngestMetadata = Metadata & {
-  orgId?: string;
-  projectId?: string;
-  tags?: string[];
-};
+export type Metadata = Record<
+  string,
+  MetadataValue | MetadataValue[] | undefined
+>;
 
 export type Chunk = {
   id: string;
@@ -13,7 +12,7 @@ export type Chunk = {
   index: number;
   content: string;
   tokenCount: number;
-  metadata: IngestMetadata;
+  metadata: Metadata;
   embedding?: number[];
 };
 
@@ -32,7 +31,7 @@ export type Chunker = (content: string, options: ChunkingOptions) => ChunkText[]
 
 export type EmbeddingInput = {
   text: string;
-  metadata: IngestMetadata;
+  metadata: Metadata;
   position: number;
   sourceId: string;
   documentId: string;
@@ -50,8 +49,6 @@ export type VectorStore = {
     embedding: number[];
     topK: number;
     scope?: {
-      orgId?: string;
-      projectId?: string;
       sourceId?: string;
     };
   }) => Promise<Array<Chunk & { score: number }>>;
@@ -60,7 +57,7 @@ export type VectorStore = {
 export type IngestInput = {
   sourceId: string;
   content: string;
-  metadata?: IngestMetadata;
+  metadata?: Metadata;
   chunking?: Partial<ChunkingOptions>;
 };
 
@@ -80,8 +77,6 @@ export type RetrieveInput = {
   query: string;
   topK?: number;
   scope?: {
-    orgId?: string;
-    projectId?: string;
     sourceId?: string;
   };
 };
@@ -111,3 +106,5 @@ export type ResolvedContextEngineConfig = {
   chunker: Chunker;
   idGenerator: () => string;
 };
+
+

@@ -1,17 +1,20 @@
 import { embed } from "ai";
-import type { EmbeddingProvider } from "./types";
+import type { EmbeddingProvider } from "../core/types";
 
-type AIEmbeddingConfig = {
+export type AiEmbeddingConfig = {
+  /**
+   * AI Gateway model id, e.g. "openai/text-embedding-3-small"
+   */
   model?: string;
   timeoutMs?: number;
 };
 
-const DEFAULT_MODEL = "openai/text-embedding-3-large";
+const DEFAULT_MODEL = "openai/text-embedding-3-small";
 
-export const createAIEmbeddingProvider = (
-  config: AIEmbeddingConfig = {}
+export const createAiEmbeddingProvider = (
+  config: AiEmbeddingConfig = {}
 ): EmbeddingProvider => {
-  const model = config.model ?? Bun.env.AI_GATEWAY_MODEL ?? DEFAULT_MODEL;
+  const model = config.model ?? process.env.AI_GATEWAY_MODEL ?? DEFAULT_MODEL;
 
   return {
     name: `ai-sdk:${model}`,
@@ -35,3 +38,5 @@ export const createAIEmbeddingProvider = (
     },
   };
 };
+
+

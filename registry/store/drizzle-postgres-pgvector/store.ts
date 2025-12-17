@@ -1,9 +1,9 @@
-import { documents, chunks, embeddings, schema } from "./schema";
-import type { Chunk, VectorStore } from "../../types";
+import { documents, chunks, embeddings } from "./schema";
+import type { Chunk, VectorStore } from "../../core/types";
 import { sql } from "drizzle-orm";
 import type { AnyPgDatabase, SQL } from "drizzle-orm/pg-core";
 
-type DrizzleDb = AnyPgDatabase<typeof schema>;
+type DrizzleDb = AnyPgDatabase<any>;
 
 const sanitizeMetadata = (metadata: unknown) => {
   if (metadata === undefined) {
@@ -20,8 +20,6 @@ const sanitizeMetadata = (metadata: unknown) => {
 const toDocumentRow = (chunk: Chunk) => ({
   id: chunk.documentId,
   sourceId: chunk.sourceId,
-  orgId: chunk.metadata.orgId ?? null,
-  projectId: chunk.metadata.projectId ?? null,
   metadata: sanitizeMetadata(chunk.metadata) as Record<string, unknown> | null,
 });
 
@@ -52,8 +50,6 @@ export const createDrizzleVectorStore = (db: DrizzleDb): VectorStore => ({
           target: documents.id,
           set: {
             sourceId: documentRow.sourceId,
-            orgId: documentRow.orgId,
-            projectId: documentRow.projectId,
             metadata: documentRow.metadata,
           },
         });
@@ -100,14 +96,6 @@ export const createDrizzleVectorStore = (db: DrizzleDb): VectorStore => ({
   query: async ({ embedding, topK, scope = {} }) => {
     const filters: SQL[] = [];
 
-    if (scope.orgId) {
-      filters.push(sql`d.org_id = ${scope.orgId}`);
-    }
-
-    if (scope.projectId) {
-      filters.push(sql`d.project_id = ${scope.projectId}`);
-    }
-
     if (scope.sourceId) {
       filters.push(sql`c.source_id = ${scope.sourceId}`);
     }
@@ -150,4 +138,4 @@ export const createDrizzleVectorStore = (db: DrizzleDb): VectorStore => ({
   },
 });
 
-export type { schema as drizzleSchema };
+

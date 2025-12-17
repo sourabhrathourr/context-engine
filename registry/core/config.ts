@@ -23,3 +23,5 @@ export const resolveConfig = (
     idGenerator: config.idGenerator ?? defaultIdGenerator,
   };
 };
+
+

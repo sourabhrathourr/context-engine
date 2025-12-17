@@ -21,8 +21,6 @@ const vector = (name: string, dimensions?: number) =>
 export const documents = pgTable("documents", {
   id: uuid("id").primaryKey(),
   sourceId: text("source_id").notNull(),
-  orgId: text("org_id"),
-  projectId: text("project_id"),
   metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
   createdAt: timestamp("created_at", { mode: "date", withTimezone: false }).defaultNow(),
 });
@@ -60,3 +58,5 @@ export const schema = {
   chunks,
   embeddings,
 };
+
+
