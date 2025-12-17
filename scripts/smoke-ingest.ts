@@ -28,17 +28,36 @@ const run = async () => {
 
   const result = await contextEngine.ingest({
     sourceId: "smoke-test",
-    content:
-      `Coding tools are fine, useful, and they definitely help you make the design a reality. A lot of the commentary I’ve seen is about making design quality happen through better implementation, which is great but not really about designing.
-I tend to think about design as a search, not a production pipeline. You start with a messy problem. Early on, you do not know the answer. This is why I never fully buy the idea that design is about output. I agree that design is useless without shipping, but the process of designing is not.
-The design process, and the suffering part of that process, are valuable.
-Constraints
-Constraints are not the enemy, but they can arrive early. 
+    content: `To be in the top 5% as a developer especially in distributed systems - you don’t win by moving fast. You win by building depth where others skip.
 
-Constraints exist in reality: time, budgets, codebases, teams, customers. The mistake is letting those constraints define the space before you have found a direction worth committing to. Then they start shaping your imagination. Early design is about direction. You are trying to find a form that resolves the problem in a way that feels obvious once you see it. That phase benefits from speed, looseness, and tools that let you change your mind without paying a tax for it. Later, constraints become essential. You want reality to push back. You want the medium to answer your questions. That is where prototyping, code, edge cases, performance, and all the sharp corners start improving the work. That is where the craft shows up, and where design-code tools can be useful.
-Architecture analog
-Architecture is full of constraints, more constraints than software will ever have: materials, gravity, weather, budgets, labor, code, zoning, politics. 
-Yet it still often starts with sketches. Not because sketching is pure or nostalgic, but because it is a way to separate form from construction long enough to find something worth constructing. A sketch is not a smaller version of the final building. It is a different mode of thinking. It gives you permission to be wrong in interesting ways, and to paint broad strokes. You don’t design houses by iterating from one corner to a full house piece by piece.`,
+    Here’s what that actually looks like, in practical terms:
+
+    1. Start with fundamentals, not tools
+    Learn why systems fail before learning how to deploy them. Study networking (TCP, congestion, timeouts), storage (logs, indexes, compaction), and concurrency (threads, async, locks). Tools change. Physics doesn’t.
+
+    2. Build systems that can break
+    Don’t just read about consensus or queues - implement a toy Kafka, a basic Raft, a rate limiter, a WAL-backed store. The pain of debugging teaches you more than a thousand blog posts.
+
+    3. Develop latency intuition
+    Know the difference between nanoseconds, milliseconds, and seconds in your bones. Learn where time is spent: syscalls, serialization, cache misses, network hops. Top engineers think in budgets, not abstractions.
+
+    4. Learn failure modes early
+    Network partitions, partial writes, duplicate messages, clock skew - these aren’t edge cases, they’re the default. Design assuming things will fail and ask “what happens next?” every time.
+
+    5. Write boring, correct code
+    Fancy abstractions are cheap. Predictable behavior under load is rare. Prefer clarity over cleverness, invariants over hacks, and simplicity over “smart” shortcuts.
+
+    6. Practice reasoning under pressure
+    Distributed systems are about trade-offs: consistency vs availability, throughput vs latency, simplicity vs flexibility. Practice explaining why you chose something, not just what you chose.
+
+    7. Use AI as an assistant, not a crutch
+    Let AI help you explore ideas or reduce boilerplate but always understand the output. If you can’t explain it line by line, you didn’t learn it.
+
+    8. Play the long game
+    Muscle memory, intuition, and first-principles thinking take years. There is no speedrun. The people who “win early” by shortcuts often stall out later.
+
+    The top 5% aren’t faster typers or better prompt engineers.
+    They’re the ones who stayed with the hard problems long enough to truly understand them.`,
     metadata: { orgId: "demo-org", projectId: "demo-project" },
   });
 

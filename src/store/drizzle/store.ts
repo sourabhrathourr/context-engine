@@ -1,9 +1,10 @@
 import { documents, chunks, embeddings, schema } from "./schema";
 import type { RetrievedChunk, StoredChunk, VectorStore } from "../../types";
 import { sql } from "drizzle-orm";
-import type { AnyPgDatabase, SQL } from "drizzle-orm/pg-core";
+import type { BunSQLDatabase } from "drizzle-orm/bun-sql";
+import type { SQL } from "drizzle-orm";
 
-type DrizzleDb = AnyPgDatabase<typeof schema>;
+type DrizzleDb = BunSQLDatabase<typeof schema>;
 
 const sanitizeMetadata = (metadata: unknown) => {
   if (metadata === undefined) {
@@ -43,8 +44,8 @@ export const createDrizzleVectorStore = (db: DrizzleDb): VectorStore => ({
       return;
     }
 
-    await db.transaction(async (tx) => {
-      const head = chunkItems[0];
+    await db.transaction(async (tx: DrizzleDb) => {
+      const head = chunkItems[0]!;
       const documentRow = toDocumentRow(head);
 
       await tx
@@ -119,7 +120,18 @@ export const createDrizzleVectorStore = (db: DrizzleDb): VectorStore => ({
 
     const vectorLiteral = `[${embedding.join(",")}]`;
 
-    const rows = await db.execute(
+    const rows = await db.execute<{
+      id: string;
+      document_id: string;
+      source_id: string;
+      idx: number;
+      content: string;
+      token_count: number;
+      metadata: unknown;
+      document_content: string | null;
+      document_url: string | null;
+      score: number;
+    }>(
       sql`
         select
           c.id,
