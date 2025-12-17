@@ -14,13 +14,14 @@
     "@clack/prompts": "^0.11.0",
     "ai": "^5.0.113",
     "drizzle-orm": "^0.45.1",
+    "jsonc-parser": "^3.3.1",
     "pg": "^8.16.3"
   },
   "peerDependencies": {
     "typescript": "^5"
   },
   "scripts": {
-    "build": "bun build --target=node --format=esm --outfile dist/cli/index.js cli/index.ts",
+    "build": "bun build --target=node --format=esm --packages=external --outfile dist/cli/index.js cli/index.ts",
     "test": "bun test"
   },
   "files": [

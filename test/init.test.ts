@@ -53,7 +53,7 @@ describe("context-engine init", () => {
 
     expect(await pathExists(path.join(runDir, "context-engine.json"))).toBe(true);
     expect(await pathExists(path.join(runDir, "rag.config.ts"))).toBe(true);
-    expect(await pathExists(path.join(runDir, "docs", "rag.md"))).toBe(true);
+    expect(await pathExists(path.join(runDir, "src/lib/rag", "rag.md"))).toBe(true);
 
     expect(
       await pathExists(
@@ -89,6 +89,51 @@ describe("context-engine init", () => {
     const tsconfig = await readJson<any>(path.join(runDir, "tsconfig.json"));
     expect(tsconfig.compilerOptions.baseUrl).toBe(".");
     expect(tsconfig.compilerOptions.paths["@rag/*"]).toEqual(["./src/lib/rag/*"]);
+    expect(tsconfig.compilerOptions.paths["@rag/config"]).toEqual(["./rag.config.ts"]);
+  });
+
+  test("detects Next and creates tsconfig when missing", async () => {
+    await writeJson(path.join(runDir, "package.json"), {
+      name: "nextproj",
+      private: true,
+      type: "module",
+      dependencies: { next: "16.0.10" },
+    });
+
+    process.chdir(runDir);
+    await initCommand(["--yes", "--store", "drizzle", "--dir", "lib/rag"]);
+
+    const tsconfig = await readJson<any>(path.join(runDir, "tsconfig.json"));
+    expect(tsconfig.compilerOptions.baseUrl).toBe(".");
+    expect(tsconfig.compilerOptions.paths["@rag/*"]).toEqual(["./lib/rag/*"]);
+    expect(tsconfig.compilerOptions.paths["@rag/config"]).toEqual(["./rag.config.ts"]);
+  });
+
+  test("patches Next tsconfig when paths already exist", async () => {
+    await writeJson(path.join(runDir, "package.json"), {
+      name: "nextproj",
+      private: true,
+      type: "module",
+      dependencies: { next: "16.0.10" },
+    });
+    await writeJson(path.join(runDir, "tsconfig.json"), {
+      compilerOptions: {
+        target: "ES2017",
+        moduleResolution: "bundler",
+        paths: {
+          "@/*": ["./*"],
+        },
+      },
+      include: ["**/*.ts"],
+    });
+
+    process.chdir(runDir);
+    await initCommand(["--yes", "--store", "drizzle", "--dir", "lib/rag"]);
+
+    const tsconfig = await readJson<any>(path.join(runDir, "tsconfig.json"));
+    expect(tsconfig.compilerOptions.baseUrl).toBe(".");
+    expect(tsconfig.compilerOptions.paths["@/*"]).toEqual(["./*"]);
+    expect(tsconfig.compilerOptions.paths["@rag/*"]).toEqual(["./lib/rag/*"]);
     expect(tsconfig.compilerOptions.paths["@rag/config"]).toEqual(["./rag.config.ts"]);
   });
 });

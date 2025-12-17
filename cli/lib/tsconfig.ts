@@ -1,6 +1,7 @@
 import path from "node:path";
 import { readFile, writeFile } from "node:fs/promises";
 import { exists } from "./fs";
+import { parse } from "jsonc-parser";
 
 type TsConfig = Record<string, unknown> & {
   compilerOptions?: Record<string, unknown> & {
@@ -9,29 +10,19 @@ type TsConfig = Record<string, unknown> & {
   };
 };
 
-const stripJsonComments = (input: string) => {
-  // Remove /* */ block comments
-  const withoutBlocks = input.replace(/\/\*[\s\S]*?\*\//g, "");
-  // Remove // line comments (naive but works for typical tsconfig)
-  return withoutBlocks.replace(/^\s*\/\/.*$/gm, "");
-};
-
-const stripTrailingCommas = (input: string) => {
-  // Remove trailing commas in objects/arrays: { "a": 1, } or [1,2,]
-  return input.replace(/,\s*([}\]])/g, "$1");
-};
-
-const parseJsoncLoose = (raw: string) => {
-  const noComments = stripJsonComments(raw);
-  const noTrailingCommas = stripTrailingCommas(noComments);
-  return JSON.parse(noTrailingCommas) as TsConfig;
+const parseJsoncLoose = (raw: string): TsConfig => {
+  const errors: Parameters<typeof parse>[1] = [];
+  const result = parse(raw, errors, { allowTrailingComma: true }) as TsConfig;
+  if (errors.length > 0 || !result || typeof result !== "object") {
+    throw new Error("Failed to parse tsconfig JSONC");
+  }
+  return result;
 };
 
 export async function patchTsconfigPaths(params: {
   projectRoot: string;
   installDir: string; // posix project-relative
 }): Promise<{ changed: boolean; file?: string }> {
-  const candidates = ["tsconfig.json", "jsconfig.json"];
   const configFile =
     (await exists(path.join(params.projectRoot, "tsconfig.json")))
       ? "tsconfig.json"
@@ -39,7 +30,27 @@ export async function patchTsconfigPaths(params: {
         ? "jsconfig.json"
         : null;
 
-  if (!configFile) return { changed: false };
+  const aliasKey = "@rag/*";
+  const target = [`./${params.installDir.replace(/\\/g, "/")}/*`];
+  const configAliasKey = "@rag/config";
+  const configTarget = ["./rag.config.ts"];
+
+  // If there's no tsconfig/jsconfig yet (common in fresh Next apps), create one.
+  if (!configFile) {
+    const abs = path.join(params.projectRoot, "tsconfig.json");
+    const next: TsConfig = {
+      compilerOptions: {
+        baseUrl: ".",
+        paths: {
+          [aliasKey]: target,
+          [configAliasKey]: configTarget,
+        },
+      },
+    };
+
+    await writeFile(abs, JSON.stringify(next, null, 2) + "\n", "utf8");
+    return { changed: true, file: "tsconfig.json" };
+  }
 
   const abs = path.join(params.projectRoot, configFile);
   const raw = await readFile(abs, "utf8");
@@ -52,31 +63,33 @@ export async function patchTsconfigPaths(params: {
   }
 
   const next: TsConfig = { ...parsed };
-  next.compilerOptions = { ...(parsed.compilerOptions ?? {}) };
-  next.compilerOptions.baseUrl = next.compilerOptions.baseUrl ?? ".";
-  next.compilerOptions.paths = { ...(next.compilerOptions.paths ?? {}) };
+  next.compilerOptions =
+    parsed.compilerOptions && typeof parsed.compilerOptions === "object"
+      ? { ...parsed.compilerOptions }
+      : {};
 
-  const aliasKey = "@rag/*";
-  const target = [`./${params.installDir.replace(/\\/g, "/")}/*`];
-  const configAliasKey = "@rag/config";
-  const configTarget = ["./rag.config.ts"];
+  const parsedPaths =
+    next.compilerOptions.paths && typeof next.compilerOptions.paths === "object"
+      ? next.compilerOptions.paths
+      : {};
+  next.compilerOptions.paths = { ...parsedPaths };
 
-  const existing = next.compilerOptions.paths[aliasKey];
-  if (existing && JSON.stringify(existing) === JSON.stringify(target)) {
-    // still might need to add @rag/config
+  const hasBaseUrl = typeof next.compilerOptions.baseUrl === "string" && next.compilerOptions.baseUrl.length > 0;
+  const hasRagAlias = Array.isArray(next.compilerOptions.paths[aliasKey]);
+  const hasRagConfigAlias = Array.isArray(next.compilerOptions.paths[configAliasKey]);
+
+  const needsWrite = !hasBaseUrl || !hasRagAlias || !hasRagConfigAlias;
+  if (!needsWrite) return { changed: false, file: configFile };
+
+  if (!hasBaseUrl) {
+    next.compilerOptions.baseUrl = ".";
   }
-
-  if (!existing) {
+  if (!hasRagAlias) {
     next.compilerOptions.paths[aliasKey] = target;
   }
-
-  if (!next.compilerOptions.paths[configAliasKey]) {
+  if (!hasRagConfigAlias) {
     next.compilerOptions.paths[configAliasKey] = configTarget;
   }
-
-  // Only write if something actually changed
-  const changed = JSON.stringify(next) !== JSON.stringify(parsed);
-  if (!changed) return { changed: false, file: configFile };
 
   await writeFile(abs, JSON.stringify(next, null, 2) + "\n", "utf8");
   return { changed: true, file: configFile };

@@ -165,7 +165,7 @@ export async function copyRegistryFiles(selection: RegistrySelection) {
     },
     {
       src: path.join(selection.registryRoot, "docs/rag.md"),
-      dest: toAbs("docs/rag.md"),
+      dest: path.join(installBaseAbs, "rag.md"),
       transform: (c) => renderDocs(c, selection),
     },
 

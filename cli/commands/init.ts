@@ -164,7 +164,7 @@ export async function initCommand(args: string[]) {
       "Installed Context Engine.",
       "",
       `- Code: ${path.join(installDir)}`,
-      `- Docs: docs/rag.md`,
+      `- Docs: ${path.join(installDir, "rag.md")}`,
       `- Config: rag.config.ts`,
       isNext
         ? tsconfigResult.changed
