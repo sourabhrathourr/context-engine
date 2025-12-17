@@ -4,7 +4,7 @@ const main = async () => {
   const engine = createContextEngineWithDrizzle();
 
   const result = await engine.retrieve({
-    query: "Bun Drizzle retrieval test",
+    query: "design is search",
     topK: 5,
     scope: { orgId: "demo-org", projectId: "demo-project" },
     includeDocument: true,
