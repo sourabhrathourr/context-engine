@@ -1,9 +1,9 @@
 import { documents, chunks, embeddings } from "./schema";
 import type { Chunk, VectorStore } from "../../core/types";
-import { sql } from "drizzle-orm";
-import type { AnyPgDatabase, SQL } from "drizzle-orm/pg-core";
+import { sql, type SQL } from "drizzle-orm";
+import type { PgDatabase } from "drizzle-orm/pg-core";
 
-type DrizzleDb = AnyPgDatabase<any>;
+type DrizzleDb = PgDatabase<any, any, any>;
 
 const sanitizeMetadata = (metadata: unknown) => {
   if (metadata === undefined) {
@@ -41,7 +41,7 @@ export const createDrizzleVectorStore = (db: DrizzleDb): VectorStore => ({
     }
 
     await db.transaction(async (tx) => {
-      const head = chunkItems[0];
+      const head = chunkItems[0]!;
       const documentRow = toDocumentRow(head);
 
       await tx
@@ -127,7 +127,7 @@ export const createDrizzleVectorStore = (db: DrizzleDb): VectorStore => ({
       `
     );
 
-    return rows.map((row) => ({
+    return (rows as Array<Record<string, unknown>>).map((row) => ({
       id: String(row.id),
       documentId: String(row.document_id),
       sourceId: String(row.source_id),
