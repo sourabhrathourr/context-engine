@@ -30,12 +30,20 @@ export const retrieve = async (
     topK: input.topK ?? DEFAULT_TOP_K,
     scope: input.scope,
   });
+
+  const filteredChunks = input.includeDocument
+    ? chunks
+    : chunks.map((chunk) => ({
+        ...chunk,
+        documentContent: undefined,
+        documentUrl: undefined,
+      }));
   const retrievalMs = now() - retrievalStart;
 
   const totalMs = now() - totalStart;
 
   return {
-    chunks,
+    chunks: filteredChunks,
     embeddingModel: config.embedding.name,
     durations: {
       totalMs,

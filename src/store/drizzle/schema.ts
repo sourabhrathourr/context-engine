@@ -24,6 +24,8 @@ export const documents = pgTable("documents", {
   orgId: text("org_id"),
   projectId: text("project_id"),
   metadata: jsonb("metadata").$type<Record<string, unknown> | null>(),
+  content: text("content").notNull(),
+  contentUrl: text("content_url"),
   createdAt: timestamp("created_at", { mode: "date", withTimezone: false }).defaultNow(),
 });
 

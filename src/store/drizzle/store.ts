@@ -1,5 +1,5 @@
 import { documents, chunks, embeddings, schema } from "./schema";
-import type { Chunk, VectorStore } from "../../types";
+import type { RetrievedChunk, StoredChunk, VectorStore } from "../../types";
 import { sql } from "drizzle-orm";
 import type { AnyPgDatabase, SQL } from "drizzle-orm/pg-core";
 
@@ -17,15 +17,17 @@ const sanitizeMetadata = (metadata: unknown) => {
   }
 };
 
-const toDocumentRow = (chunk: Chunk) => ({
+const toDocumentRow = (chunk: StoredChunk) => ({
   id: chunk.documentId,
   sourceId: chunk.sourceId,
   orgId: chunk.metadata.orgId ?? null,
   projectId: chunk.metadata.projectId ?? null,
   metadata: sanitizeMetadata(chunk.metadata) as Record<string, unknown> | null,
+  content: chunk.documentContent,
+  contentUrl: chunk.documentUrl ?? null,
 });
 
-const toChunkRow = (chunk: Chunk) => ({
+const toChunkRow = (chunk: StoredChunk) => ({
   id: chunk.id,
   documentId: chunk.documentId,
   sourceId: chunk.sourceId,
@@ -127,6 +129,8 @@ export const createDrizzleVectorStore = (db: DrizzleDb): VectorStore => ({
           c.content,
           c.token_count,
           c.metadata,
+          d.content as document_content,
+          d.content_url as document_url,
           (e.embedding <=> ${vectorLiteral}) as score
         from ${chunks} as c
         join ${embeddings} as e on e.chunk_id = c.id
@@ -144,9 +148,11 @@ export const createDrizzleVectorStore = (db: DrizzleDb): VectorStore => ({
       index: Number(row.idx),
       content: String(row.content),
       tokenCount: Number(row.token_count),
-      metadata: (row.metadata ?? {}) as Chunk["metadata"],
+      metadata: (row.metadata ?? {}) as StoredChunk["metadata"],
       score: Number(row.score),
-    }));
+      documentContent: row.document_content as string | undefined,
+      documentUrl: (row.document_url as string | null) ?? null,
+    })) as RetrievedChunk[];
   },
 });
 

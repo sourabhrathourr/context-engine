@@ -44,8 +44,13 @@ export type EmbeddingProvider = {
   embed: (input: EmbeddingInput) => Promise<number[]>;
 };
 
+export type StoredChunk = Chunk & {
+  documentContent: string;
+  documentUrl?: string | null;
+};
+
 export type VectorStore = {
-  upsert: (chunks: Chunk[]) => Promise<void>;
+  upsert: (chunks: StoredChunk[]) => Promise<void>;
   query: (params: {
     embedding: number[];
     topK: number;
@@ -54,12 +59,13 @@ export type VectorStore = {
       projectId?: string;
       sourceId?: string;
     };
-  }) => Promise<Array<Chunk & { score: number }>>;
+  }) => Promise<RetrievedChunk[]>;
 };
 
 export type IngestInput = {
   sourceId: string;
   content: string;
+  contentUrl?: string;
   metadata?: IngestMetadata;
   chunking?: Partial<ChunkingOptions>;
 };
@@ -84,16 +90,23 @@ export type RetrieveInput = {
     projectId?: string;
     sourceId?: string;
   };
+  includeDocument?: boolean;
 };
 
 export type RetrieveResult = {
-  chunks: Array<Chunk & { score: number }>;
+  chunks: RetrievedChunk[];
   embeddingModel: string;
   durations: {
     totalMs: number;
     embeddingMs: number;
     retrievalMs: number;
   };
+};
+
+export type RetrievedChunk = Chunk & {
+  score: number;
+  documentContent?: string;
+  documentUrl?: string | null;
 };
 
 export type ContextEngineConfig = {

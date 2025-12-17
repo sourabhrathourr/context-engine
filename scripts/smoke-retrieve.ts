@@ -7,6 +7,7 @@ const main = async () => {
     query: "Bun Drizzle retrieval test",
     topK: 5,
     scope: { orgId: "demo-org", projectId: "demo-project" },
+    includeDocument: true,
   });
 
   console.log("Retrieve completed:");
@@ -14,6 +15,10 @@ const main = async () => {
     console.log(
       `score=${chunk.score.toFixed(4)} doc=${chunk.documentId} idx=${chunk.index} content="${chunk.content.slice(0, 80)}..."`
     );
+
+    if (chunk.documentContent) {
+      console.log(`  doc-body (head): "${chunk.documentContent.slice(0, 100)}..."`);
+    }
   }
 };
 

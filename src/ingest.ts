@@ -1,5 +1,5 @@
 import type {
-  Chunk,
+  StoredChunk,
   IngestInput,
   IngestResult,
   ResolvedContextEngineConfig,
@@ -22,7 +22,9 @@ export const ingest = async (
   const metadata = input.metadata ?? {};
   const documentId = config.idGenerator();
 
-  const chunks = config.chunker(input.content, chunkingOptions).map<Chunk>(
+  const chunks = config
+    .chunker(input.content, chunkingOptions)
+    .map<StoredChunk>(
     (chunk) => ({
       id: config.idGenerator(),
       documentId,
@@ -31,6 +33,8 @@ export const ingest = async (
       content: chunk.content,
       tokenCount: chunk.tokenCount,
       metadata,
+      documentContent: input.content,
+      documentUrl: input.contentUrl ?? null,
     })
   );
 

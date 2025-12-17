@@ -3,11 +3,11 @@
 A Bun-first, bring-your-own-db RAG core with ingest and retrieve primitives. It uses:
 - Bun + Drizzle ORM with Postgres + pgvector
 - Vercel AI Gateway via `ai` SDK for embeddings (`openai/text-embedding-3-small`)
-- Simple chunking + scope filters (org/project/source)
+- Simple chunking + scope filters (org/project/source) and full document storage
 
 ## Features
-- **Ingest**: chunk text, embed with AI Gateway, persist documents/chunks/embeddings via Drizzle + pgvector.
--,**Retrieve**: embed queries and run pgvector similarity with optional scope filters.
+- **Ingest**: chunk text, embed with AI Gateway, persist documents (with full content + optional URL), chunks, and embeddings via Drizzle + pgvector.
+- **Retrieve**: embed queries and run pgvector similarity with optional scope filters; optionally return the full document content with each hit.
 - **Configurable**: defaults live in `context-engine.config.ts`; swap chunking options, timeouts, and DB.
 - **Scripts**: smoke ingest/retrieve, pgvector enable, Drizzle generate/push.
 
@@ -38,11 +38,12 @@ import { createContextEngineWithDrizzle } from "./context-engine.config";
 const engine = createContextEngineWithDrizzle();
 ```
 
-Ingest:
+Ingest (stores full content + optional `contentUrl` on the document):
 ```ts
 await engine.ingest({
   sourceId: "doc-1",
   content: "Your text to chunk and embed...",
+  contentUrl: "https://example.com/source", // optional
   metadata: { orgId: "org-1", projectId: "proj-1" },
 });
 ```
@@ -53,6 +54,7 @@ const { chunks } = await engine.retrieve({
   query: "search text",
   topK: 5,
   scope: { orgId: "org-1", projectId: "proj-1" },
+  includeDocument: true, // include full document body/url in results
 });
 ```
 
@@ -64,5 +66,5 @@ const { chunks } = await engine.retrieve({
 
 ## Notes
 - Embedding model fixed to `openai/text-embedding-3-small`.
-- Retrieval uses pgvector `<=>` (lower is closer). Scope filters can narrow by org/project/source.
+- Retrieval uses pgvector `<=>` (lower is closer). Scope filters can narrow by org/project/source; `includeDocument` returns stored document content/URL.
 - Ensure network/DB access for migrations and smoke scripts.
